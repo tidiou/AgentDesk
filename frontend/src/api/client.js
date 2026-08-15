@@ -29,3 +29,16 @@ export async function generateUAT(jobId) {
 
   return response.json()
 }
+
+export async function generateAnalytics(jobId) {
+  const response = await fetch(`${API_BASE}/functions/analytics/generate/${jobId}`, {
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(errorBody.detail || `Analytics generation failed with status ${response.status}`)
+  }
+
+  return response.json()
+}
