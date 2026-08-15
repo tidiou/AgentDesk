@@ -42,3 +42,44 @@ export async function generateAnalytics(jobId) {
 
   return response.json()
 }
+
+export async function exportUATExcel(uatResult) {
+  const response = await fetch(`${API_BASE}/functions/uat/export`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(uatResult),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Export failed with status ${response.status}`)
+  }
+
+  const blob = await response.blob()
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `UAT_Spec_${uatResult.source_filename.replace(/\.[^/.]+$/, '')}.xlsx`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.URL.revokeObjectURL(url)
+}
+
+export async function shareAnalytics(result) {
+  const response = await fetch(`${API_BASE}/functions/analytics/share`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(result),
+  })
+  if (!response.ok) throw new Error('Failed to create share link')
+  return response.json()
+}
+
+export async function getSharedAnalytics(shareId) {
+  const response = await fetch(`${API_BASE}/functions/analytics/share/${shareId}`)
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(errorBody.detail || 'Shared report not found')
+  }
+  return response.json()
+}

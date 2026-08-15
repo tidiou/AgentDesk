@@ -1,6 +1,6 @@
 import pandas as pd
 from fastapi import APIRouter, HTTPException
-
+from app.services.share_store import create_share, get_shared_analytics
 from app.functions.analytics_generator import generate_analytics
 from app.schemas.analytics import AnalyticsResponse
 from app.services.job_store import get_job
@@ -40,4 +40,17 @@ def generate_table_analytics(job_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analytics generation failed: {e}")
 
+    return result
+
+@router.post("/share")
+def share_analytics(result: AnalyticsResponse):
+    share_id = create_share(result)
+    return {"share_id": share_id}
+
+
+@router.get("/share/{share_id}", response_model=AnalyticsResponse)
+def get_analytics_share(share_id: str):
+    result = get_shared_analytics(share_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="This shared report was not found or has expired")
     return result

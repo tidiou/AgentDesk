@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
+from app.functions.uat_export import build_uat_excel
+from app.schemas.uat import UATGenerationResponse
 
 from app.functions.uat_generator import generate_uat_spec
 from app.schemas.uat import UATGenerationResponse
@@ -29,3 +31,15 @@ def generate_uat(job_id: str):
         raise HTTPException(status_code=500, detail=f"UAT generation failed: {e}")
 
     return result
+
+@router.post("/export")
+def export_uat_excel(uat_result: UATGenerationResponse):
+    buffer = build_uat_excel(uat_result.test_cases, uat_result.source_filename)
+
+    filename = f"UAT_Spec_{uat_result.source_filename.rsplit('.', 1)[0]}.xlsx"
+
+    return Response(
+        content=buffer.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
