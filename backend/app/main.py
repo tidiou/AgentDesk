@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,16 +11,18 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Allow the Vite dev server to talk to this API during local development
+ALLOWED_ORIGINS = ["http://localhost:5173"]
+if os.getenv("FRONTEND_URL"):
+    ALLOWED_ORIGINS.append(os.getenv("FRONTEND_URL"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Mount routers — each router owns one concern (ingestion, or one function)
 app.include_router(ingest.router, prefix="/api/ingest", tags=["ingest"])
 app.include_router(uat.router, prefix="/api/functions/uat", tags=["functions"])
 app.include_router(analytics.router, prefix="/api/functions/analytics", tags=["functions"])
