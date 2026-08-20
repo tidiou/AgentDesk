@@ -1,5 +1,5 @@
 import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, ScatterChart, Scatter,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 
@@ -62,6 +62,15 @@ function ChartBlock({ chart, rawStats }) {
             <Legend />
           </PieChart>
         )}
+       {chart.chart_type === 'scatter' && (
+  <ScatterChart>
+    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+    <XAxis dataKey="index" name="Point #" stroke="#999" />
+    <YAxis dataKey="value" name={chart.y_column} stroke="#999" />
+    <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+    <Scatter data={data} fill="#f0798a" />
+  </ScatterChart>
+)}
       </ResponsiveContainer>
     </div>
   )
@@ -71,6 +80,14 @@ function ChartBlock({ chart, rawStats }) {
 // [{ name, value }] shape. Uses categorical top_values or numeric summary,
 // since we don't have row-level data on the frontend — only the stats.
 function buildChartData(chart, rawStats) {
+  if (chart.chart_type === 'scatter') {
+    const outlierStats = rawStats.outliers?.[chart.y_column]
+    if (outlierStats?.sample_values) {
+      return outlierStats.sample_values.map((value, i) => ({ index: i + 1, value }))
+    }
+    return []
+  }
+
   const catStats = rawStats.categorical_summary?.[chart.x_column]
   if (catStats?.top_values) {
     return Object.entries(catStats.top_values).map(([name, value]) => ({ name, value }))

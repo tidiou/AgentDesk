@@ -3,7 +3,7 @@ from typing import Literal
 
 
 class ChartRecommendation(BaseModel):
-    chart_type: Literal["bar", "line", "pie"]
+    chart_type: Literal["bar", "line", "pie", "scatter"]
     title: str
     x_column: str
     y_column: str

@@ -7,17 +7,23 @@ from app.services.ai_client import call_ai_tool
 
 SYSTEM_PROMPT = """You are a data analyst. You will be given summary statistics \
 computed from a dataset (not the raw data itself) — column names, types, means, \
-distributions, missing values, and correlations where available.
+distributions, missing values, correlations, detected outliers, and simple linear \
+trend forecasts where available.
 
 Your job is to:
 1. Write a brief plain-language summary of what this dataset appears to represent
 2. Identify specific, genuinely interesting insights — trends, imbalances, outliers, \
-data quality concerns (e.g. high missing-value counts), or notable correlations
+data quality concerns (e.g. high missing-value counts), or notable correlations. \
+If outliers were detected, explicitly call out which columns and how significant \
+they are. If a trend forecast shows a meaningful increasing or decreasing \
+direction, mention what that implies going forward.
 3. Recommend 2-4 charts that would best help a business user understand this data. \
 Only recommend charts using column names that actually exist in the dataset. \
 Prefer bar charts for categorical comparisons, line charts for trends over an \
-ordered/time-like column, and pie charts only for a column with a small number \
-of categories (avoid pie charts for anything with many distinct values)."""
+ordered/time-like column (especially where a trend forecast exists), pie charts \
+only for a column with a small number of categories, and a scatter chart \
+specifically when a column has detected outliers — use the y_column to name \
+the column that has outliers."""
 
 ANALYTICS_TOOL_SCHEMA = {
     "type": "object",
@@ -36,15 +42,15 @@ ANALYTICS_TOOL_SCHEMA = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "chart_type": {"type": "string", "enum": ["bar", "line", "pie"]},
+                    "chart_type": {"type": "string", "enum": ["bar", "line", "pie", "scatter"]},
                     "title": {"type": "string"},
                     "x_column": {"type": "string", "description": "Must be an actual column name from the dataset"},
                     "y_column": {"type": "string", "description": "Must be an actual column name from the dataset"},
-                    "reason": {"type": "string", "description": "Why this chart is useful for understanding the data"},
+                    "reason": {"type": "string"},
                 },
                 "required": ["chart_type", "title", "x_column", "y_column", "reason"],
             },
-            "description": "2-4 chart suggestions that would help visualize the most interesting aspects of this data",
+            "description": "2-4 chart suggestions...",
         },
     },
     "required": ["summary", "key_insights", "chart_recommendations"],
