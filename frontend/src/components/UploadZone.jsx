@@ -41,12 +41,13 @@ function UploadZone({ onUploadComplete }) {
       onDrop={handleDrop}
       onClick={() => fileInputRef.current.click()}
       style={{
-        border: `2px dashed ${isDragging ? '#5b9dff' : '#555'}`,
-        borderRadius: '8px',
+        border: `2px dashed ${isDragging ? '#2563EB' : '#CBD5E1'}`,
+        borderRadius: '10px',
         padding: '3rem',
         textAlign: 'center',
         cursor: 'pointer',
-        backgroundColor: isDragging ? '#22262e' : 'transparent',
+        backgroundColor: isDragging ? '#DBEAFE' : 'FFFFFF',
+        transition: 'background-color 0.15s ease, border-color 0.15s ease',
       }}
     >
       <input
@@ -57,13 +58,14 @@ function UploadZone({ onUploadComplete }) {
         style={{ display: 'none' }}
       />
 
-      {status === 'uploading' && <p>Uploading...</p>}
+      {status === 'uploading' && <p style={{ color: '#2563EB' }}>Uploading...</p>}
       {status === 'idle' && (
-        <p>Drag & drop a file here, or click to browse<br />
+        <p style={{ color: '#64748B' }}>
+          Drag & drop a file here, or click to browse<br />
           <small>{ACCEPTED_EXTENSIONS.join(', ')}</small>
         </p>
       )}
-      {status === 'error' && <p style={{ color: '#ff6b6b' }}>Error: {errorMessage}</p>}
+      {status === 'error' && <p style={{ color: '#DC2626' }}>Error: {errorMessage}</p>}
     </div>
   )
 }

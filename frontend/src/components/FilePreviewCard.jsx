@@ -71,9 +71,7 @@ function StructuredPreview({ parsed }) {
   return (
     <div>
       {parsed.top_level_keys.length > 0 && (
-        <p style={metaLineStyle}>
-          Keys: {parsed.top_level_keys.join(', ')}
-        </p>
+        <p style={metaLineStyle}>Keys: {parsed.top_level_keys.join(', ')}</p>
       )}
       {parsed.item_count != null && (
         <p style={metaLineStyle}>{parsed.item_count} items</p>
@@ -85,13 +83,12 @@ function StructuredPreview({ parsed }) {
   )
 }
 
-// --- styles ---
 const cardStyle = {
-  border: '1px solid #333',
-  borderRadius: '8px',
+  border: '1px solid #E2E8F0',
+  borderRadius: '10px',
   padding: '1.25rem',
   marginTop: '1.5rem',
-  backgroundColor: '#1e2128',
+  backgroundColor: '#FFFFFF',
 }
 const headerStyle = {
   display: 'flex',
@@ -99,23 +96,24 @@ const headerStyle = {
   alignItems: 'center',
   marginBottom: '0.75rem',
 }
-const filenameStyle = { fontWeight: 600 }
+const filenameStyle = { fontWeight: 600, color: '#1E293B' }
 const badgeStyle = {
   fontSize: '0.75rem',
   padding: '0.15rem 0.5rem',
   borderRadius: '4px',
-  backgroundColor: '#333',
-  color: '#aaa',
+  backgroundColor: '#DBEAFE',
+  color: '#2563EB',
+  fontWeight: 600,
 }
-const metaLineStyle = { fontSize: '0.85rem', color: '#999', margin: '0.25rem 0' }
+const metaLineStyle = { fontSize: '0.85rem', color: '#64748B', margin: '0.25rem 0' }
 const snippetStyle = {
   fontSize: '0.85rem',
-  color: '#ccc',
+  color: '#1E293B',
   whiteSpace: 'pre-wrap',
   marginTop: '0.5rem',
 }
 const tableStyle = { borderCollapse: 'collapse', width: '100%', fontSize: '0.8rem' }
-const thStyle = { textAlign: 'left', padding: '0.4rem', borderBottom: '1px solid #444', color: '#aaa' }
-const tdStyle = { padding: '0.4rem', borderBottom: '1px solid #2a2a2a' }
+const thStyle = { textAlign: 'left', padding: '0.4rem', borderBottom: '1px solid #E2E8F0', color: '#64748B' }
+const tdStyle = { padding: '0.4rem', borderBottom: '1px solid #F1F5F9', color: '#1E293B' }
 
 export default FilePreviewCard

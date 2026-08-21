@@ -6,7 +6,7 @@ import { getSharedAnalytics } from '../api/client'
 function SharedAnalyticsView() {
   const { shareId } = useParams()
   const [result, setResult] = useState(null)
-  const [status, setStatus] = useState('loading') // loading | error | ready
+  const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -23,9 +23,9 @@ function SharedAnalyticsView() {
 
   return (
     <div style={{ maxWidth: '900px', margin: '3rem auto', padding: '0 1rem' }}>
-      <h1>AgentDesk</h1>
-      {status === 'loading' && <p>Loading shared report...</p>}
-      {status === 'error' && <p style={{ color: '#ff6b6b' }}>Error: {error}</p>}
+      <h1 style={{ color: '#2563EB' }}>AgentDesk</h1>
+      {status === 'loading' && <p style={{ color: '#64748B' }}>Loading shared report...</p>}
+      {status === 'error' && <p style={{ color: '#DC2626' }}>Error: {error}</p>}
       {status === 'ready' && <AnalyticsResultsView result={result} />}
     </div>
   )

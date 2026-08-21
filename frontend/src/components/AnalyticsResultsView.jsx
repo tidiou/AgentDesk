@@ -3,22 +3,22 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 
-const COLORS = ['#5b9dff', '#63d2a5', '#f0c674', '#f0798a', '#a78bfa']
+const COLORS = ['#2563EB', '#0EA5E9', '#F59E0B', '#8B5CF6', '#10B981']
 
 function AnalyticsResultsView({ result }) {
   return (
     <div style={{ marginTop: '1.5rem' }}>
-      <h3>Analytics — {result.source_filename}</h3>
-      <p style={{ color: '#ccc' }}>{result.summary}</p>
+      <h3 style={{ color: '#F1F5F9' }}>Analytics — {result.source_filename}</h3>
+      <p style={{ color: '#F1F5F9' }}>{result.summary}</p>
 
-      <h4>Key Insights</h4>
+      <h4 style={{ color: '#F1F5F9' }}>Key Insights</h4>
       <ul>
         {result.key_insights.map((insight, i) => (
-          <li key={i} style={{ color: '#ccc', marginBottom: '0.3rem' }}>{insight}</li>
+          <li key={i} style={{ color: '#F1F5F9', marginBottom: '0.3rem' }}>{insight}</li>
         ))}
       </ul>
 
-      <h4>Charts</h4>
+      <h4 style={{ color: '#F1F5F9' }}>Charts</h4>
       {result.chart_recommendations.map((chart, i) => (
         <ChartBlock key={i} chart={chart} rawStats={result.raw_stats} />
       ))}
@@ -31,26 +31,26 @@ function ChartBlock({ chart, rawStats }) {
 
   return (
     <div style={{ marginBottom: '2rem' }}>
-      <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{chart.title}</p>
-      <p style={{ fontSize: '0.8rem', color: '#999', marginTop: 0 }}>{chart.reason}</p>
+      <p style={{ fontWeight: 600, marginBottom: '0.25rem', color: '#F1F5F9' }}>{chart.title}</p>
+      <p style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: 0 }}>{chart.reason}</p>
 
       <ResponsiveContainer width="100%" height={280}>
         {chart.chart_type === 'bar' && (
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-            <XAxis dataKey="name" stroke="#999" />
-            <YAxis stroke="#999" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+            <XAxis dataKey="name" stroke="#64748B" />
+            <YAxis stroke="#64748B" />
             <Tooltip />
-            <Bar dataKey="value" fill="#5b9dff" />
+            <Bar dataKey="value" fill="#2563EB" />
           </BarChart>
         )}
         {chart.chart_type === 'line' && (
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-            <XAxis dataKey="name" stroke="#999" />
-            <YAxis stroke="#999" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+            <XAxis dataKey="name" stroke="#64748B" />
+            <YAxis stroke="#64748B" />
             <Tooltip />
-            <Line type="monotone" dataKey="value" stroke="#5b9dff" />
+            <Line type="monotone" dataKey="value" stroke="#2563EB" />
           </LineChart>
         )}
         {chart.chart_type === 'pie' && (
@@ -62,23 +62,20 @@ function ChartBlock({ chart, rawStats }) {
             <Legend />
           </PieChart>
         )}
-       {chart.chart_type === 'scatter' && (
-  <ScatterChart>
-    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-    <XAxis dataKey="index" name="Point #" stroke="#999" />
-    <YAxis dataKey="value" name={chart.y_column} stroke="#999" />
-    <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-    <Scatter data={data} fill="#f0798a" />
-  </ScatterChart>
-)}
+        {chart.chart_type === 'scatter' && (
+          <ScatterChart>
+            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+            <XAxis dataKey="index" name="Point #" stroke="#64748B" />
+            <YAxis dataKey="value" name={chart.y_column} stroke="#64748B" />
+            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+            <Scatter data={data} fill="#EF4444" />
+          </ScatterChart>
+        )}
       </ResponsiveContainer>
     </div>
   )
 }
 
-// Translates a chart recommendation + raw_stats into recharts' expected
-// [{ name, value }] shape. Uses categorical top_values or numeric summary,
-// since we don't have row-level data on the frontend — only the stats.
 function buildChartData(chart, rawStats) {
   if (chart.chart_type === 'scatter') {
     const outlierStats = rawStats.outliers?.[chart.y_column]
