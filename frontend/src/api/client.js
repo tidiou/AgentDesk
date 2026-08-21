@@ -82,3 +82,16 @@ export async function getSharedAnalytics(shareId) {
   }
   return response.json()
 }
+
+export async function generateSummary(jobId) {
+  const response = await fetch(`${API_BASE}/functions/summary/generate/${jobId}`, {
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(errorBody.detail || `Summary generation failed with status ${response.status}`)
+  }
+
+  return response.json()
+}

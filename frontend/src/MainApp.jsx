@@ -3,8 +3,9 @@ import UploadZone from './components/UploadZone'
 import FilePreviewCard from './components/FilePreviewCard'
 import UATResultsTable from './components/UATResultsTable'
 import AnalyticsResultsView from './components/AnalyticsResultsView'
+import SummaryResultsView from './components/SummaryResultsView'
 import ShareButton from './components/ShareButton'
-import { generateUAT, generateAnalytics, exportUATExcel } from './api/client'
+import { generateUAT, generateAnalytics, exportUATExcel, generateSummary } from './api/client'
 
 const buttonStyle = {
   backgroundColor: '#2563EB',
@@ -34,6 +35,9 @@ function MainApp() {
   const [analyticsResult, setAnalyticsResult] = useState(null)
   const [analyticsStatus, setAnalyticsStatus] = useState('idle')
   const [analyticsError, setAnalyticsError] = useState('')
+  const [summaryResult, setSummaryResult] = useState(null)
+  const [summaryStatus, setSummaryStatus] = useState('idle')
+  const [summaryError, setSummaryError] = useState('')
 
   function handleNewUpload(result) {
     setUploadResult(result)
@@ -41,6 +45,8 @@ function MainApp() {
     setUatStatus('idle')
     setAnalyticsResult(null)
     setAnalyticsStatus('idle')
+    setSummaryResult(null)
+    setSummaryStatus('idle')
   }
 
   async function handleGenerateUAT() {
@@ -69,6 +75,19 @@ function MainApp() {
     }
   }
 
+  async function handleGenerateSummary() {
+    setSummaryStatus('loading')
+    setSummaryError('')
+    try {
+      const result = await generateSummary(uploadResult.job_id)
+      setSummaryResult(result)
+      setSummaryStatus('idle')
+    } catch (err) {
+      setSummaryStatus('error')
+      setSummaryError(err.message)
+    }
+  }
+
   return (
     <div style={{ maxWidth: '900px', margin: '3rem auto', padding: '0 1rem' }}>
       <h1 style={{ color: '#2563EB', marginBottom: '0.2rem' }}>AgentDesk</h1>
@@ -79,7 +98,7 @@ function MainApp() {
       {uploadResult && <FilePreviewCard uploadResult={uploadResult} />}
 
       {uploadResult && uploadResult.category === 'document' && (
-        <div style={{ marginTop: '1rem' }}>
+        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button
             onClick={handleGenerateUAT}
             disabled={uatStatus === 'loading'}
@@ -87,9 +106,17 @@ function MainApp() {
           >
             {uatStatus === 'loading' ? 'Generating UAT Spec...' : 'Generate UAT Spec from SRS Document'}
           </button>
-          {uatStatus === 'error' && <p style={{ color: '#DC2626' }}>Error: {uatError}</p>}
+          <button
+            onClick={handleGenerateSummary}
+            disabled={summaryStatus === 'loading'}
+            style={summaryStatus === 'loading' ? buttonDisabledStyle : buttonStyle}
+          >
+            {summaryStatus === 'loading' ? 'Summarizing...' : 'Generate a Summary of the Document'}
+          </button>
         </div>
       )}
+      {uatStatus === 'error' && <p style={{ color: '#F87171' }}>Error: {uatError}</p>}
+      {summaryStatus === 'error' && <p style={{ color: '#F87171' }}>Error: {summaryError}</p>}
 
       {uploadResult && uploadResult.category === 'table' && (
         <div style={{ marginTop: '1rem' }}>
@@ -100,7 +127,7 @@ function MainApp() {
           >
             {analyticsStatus === 'loading' ? 'Analyzing Data...' : 'Analyze Data'}
           </button>
-          {analyticsStatus === 'error' && <p style={{ color: '#DC2626' }}>Error: {analyticsError}</p>}
+          {analyticsStatus === 'error' && <p style={{ color: '#F87171' }}>Error: {analyticsError}</p>}
         </div>
       )}
 
@@ -115,6 +142,8 @@ function MainApp() {
           </button>
         </>
       )}
+
+      {summaryResult && <SummaryResultsView result={summaryResult} />}
 
       {analyticsResult && (
         <>

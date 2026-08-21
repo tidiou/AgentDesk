@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import ingest
-from app.routers.functions import uat, analytics
+from app.routers.functions import uat, analytics, summary
 
 app = FastAPI(
     title="AgentDesk API",
@@ -26,6 +26,7 @@ app.add_middleware(
 app.include_router(ingest.router, prefix="/api/ingest", tags=["ingest"])
 app.include_router(uat.router, prefix="/api/functions/uat", tags=["functions"])
 app.include_router(analytics.router, prefix="/api/functions/analytics", tags=["functions"])
+app.include_router(summary.router, prefix="/api/functions/summary", tags=["functions"])
 
 
 @app.get("/api/health")
