@@ -5,7 +5,8 @@ import UATResultsTable from './components/UATResultsTable'
 import AnalyticsResultsView from './components/AnalyticsResultsView'
 import SummaryResultsView from './components/SummaryResultsView'
 import ShareButton from './components/ShareButton'
-import { generateUAT, generateAnalytics, exportUATExcel, generateSummary } from './api/client'
+import JSONFlattenResultsView from './components/JSONFlattenResultsView'
+import { generateUAT, generateAnalytics, exportUATExcel, generateSummary, generateJSONFlatten } from './api/client'
 
 const buttonStyle = {
   backgroundColor: '#2563EB',
@@ -38,6 +39,9 @@ function MainApp() {
   const [summaryResult, setSummaryResult] = useState(null)
   const [summaryStatus, setSummaryStatus] = useState('idle')
   const [summaryError, setSummaryError] = useState('')
+  const [flattenResult, setFlattenResult] = useState(null)
+  const [flattenStatus, setFlattenStatus] = useState('idle')
+  const [flattenError, setFlattenError] = useState('')
 
   function handleNewUpload(result) {
     setUploadResult(result)
@@ -47,6 +51,8 @@ function MainApp() {
     setAnalyticsStatus('idle')
     setSummaryResult(null)
     setSummaryStatus('idle')
+    setFlattenResult(null)
+    setFlattenStatus('idle')
   }
 
   async function handleGenerateUAT() {
@@ -88,6 +94,18 @@ function MainApp() {
     }
   }
 
+  async function handleGenerateFlatten() {
+  setFlattenStatus('loading')
+  setFlattenError('')
+  try {
+    const result = await generateJSONFlatten(uploadResult.job_id)
+    setFlattenResult(result)
+    setFlattenStatus('idle')
+  } catch (err) {
+    setFlattenStatus('error')
+    setFlattenError(err.message)
+  }
+}
   return (
     <div style={{ maxWidth: '900px', margin: '3rem auto', padding: '0 1rem' }}>
       <h1 style={{ color: '#2563EB', marginBottom: '0.2rem' }}>AgentDesk</h1>
@@ -131,6 +149,19 @@ function MainApp() {
         </div>
       )}
 
+      {uploadResult && uploadResult.category === 'structured' && (
+  <div style={{ marginTop: '1rem' }}>
+    <button
+      onClick={handleGenerateFlatten}
+      disabled={flattenStatus === 'loading'}
+      style={flattenStatus === 'loading' ? buttonDisabledStyle : buttonStyle}
+    >
+      {flattenStatus === 'loading' ? 'Flattening...' : 'Flatten JSON to Table'}
+    </button>
+    {flattenStatus === 'error' && <p style={{ color: '#F87171' }}>Error: {flattenError}</p>}
+  </div>
+)}
+
       {uatResult && (
         <>
           <UATResultsTable result={uatResult} />
@@ -151,6 +182,8 @@ function MainApp() {
           <ShareButton result={analyticsResult} />
         </>
       )}
+
+     {flattenResult && <JSONFlattenResultsView result={flattenResult} />}
     </div>
   )
 }

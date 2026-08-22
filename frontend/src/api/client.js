@@ -95,3 +95,33 @@ export async function generateSummary(jobId) {
 
   return response.json()
 }
+
+export async function generateJSONFlatten(jobId) {
+  const response = await fetch(`${API_BASE}/functions/json-flatten/generate/${jobId}`, {
+    method: 'POST',
+  })
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(errorBody.detail || `Flattening failed with status ${response.status}`)
+  }
+  return response.json()
+}
+
+export async function exportFlattenedExcel(result) {
+  const response = await fetch(`${API_BASE}/functions/json-flatten/export`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(result),
+  })
+  if (!response.ok) throw new Error('Export failed')
+
+  const blob = await response.blob()
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `Flattened_${result.source_filename.replace(/\.[^/.]+$/, '')}.xlsx`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.URL.revokeObjectURL(url)
+}
