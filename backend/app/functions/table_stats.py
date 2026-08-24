@@ -1,6 +1,15 @@
 import pandas as pd
 import numpy as np
 
+def _sanitize_key(k):
+    """Converts a dict key to something JSON-safe (str, int, float, bool, or None)."""
+    if k is None or isinstance(k, (str, int, float, bool)):
+        return k
+    if isinstance(k, pd.Timestamp):
+        return k.isoformat()
+    return str(k)
+
+
 def _sanitize_for_json(obj):
     """
     Recursively converts numpy scalar types to native Python types,
@@ -8,7 +17,7 @@ def _sanitize_for_json(obj):
     Handles dicts, lists, and numpy scalars; leaves everything else as-is.
     """
     if isinstance(obj, dict):
-        return {k: _sanitize_for_json(v) for k, v in obj.items()}
+        return {_sanitize_key(k): _sanitize_for_json(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [_sanitize_for_json(v) for v in obj]
     elif isinstance(obj, (np.integer,)):
@@ -17,6 +26,8 @@ def _sanitize_for_json(obj):
         return float(obj)
     elif isinstance(obj, np.ndarray):
         return obj.tolist()
+    elif isinstance(obj, pd.Timestamp):
+        return obj.isoformat()
     else:
         return obj
 
