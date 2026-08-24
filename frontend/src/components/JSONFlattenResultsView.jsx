@@ -3,37 +3,42 @@ import { exportFlattenedExcel } from '../api/client'
 function JSONFlattenResultsView({ result }) {
   return (
     <div style={{ marginTop: '1.5rem' }}>
-      <h3 style={{ color: '#F1F5F9' }}>Flattened Table — {result.source_filename}</h3>
-      <p style={{ color: '#94A3B8', fontSize: '0.85rem' }}>
-        {result.row_count} rows · {result.columns.length} columns
-        {result.row_count > result.preview_rows.length && ` (showing first ${result.preview_rows.length})`}
-      </p>
+      <h3 style={{ color: '#F1F5F9' }}>Flattened Tables — {result.source_filename}</h3>
 
-      <div style={{ overflowX: 'auto' }}>
-        <table style={tableStyle}>
-          <thead>
-            <tr>
-              {result.columns.map((col) => (
-                <th key={col} style={thStyle}>{col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {result.preview_rows.map((row, i) => (
-              <tr key={i}>
-                {result.columns.map((col) => (
-                  <td key={col} style={tdStyle}>{String(row[col] ?? '')}</td>
+      {result.tables.map((table) => (
+        <div key={table.table_name} style={{ marginBottom: '1.5rem' }}>
+          <p style={{ color: '#F1F5F9', fontWeight: 600, marginBottom: '0.25rem' }}>
+            {table.table_name}
+          </p>
+          <p style={{ color: '#94A3B8', fontSize: '0.85rem', marginTop: 0 }}>
+            {table.row_count} rows · {table.columns.length} columns
+          </p>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  {table.columns.map((col) => (
+                    <th key={col} style={thStyle}>{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {table.preview_rows.map((row, i) => (
+                  <tr key={i}>
+                    {table.columns.map((col) => (
+                      <td key={col} style={tdStyle}>{String(row[col] ?? '')}</td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
 
       <button
         onClick={() => exportFlattenedExcel(result)}
         style={{
-          marginTop: '0.75rem',
           backgroundColor: 'transparent',
           color: '#3B82F6',
           border: '1px solid #3B82F6',
@@ -43,7 +48,7 @@ function JSONFlattenResultsView({ result }) {
           fontSize: '0.9rem',
         }}
       >
-        Download as Excel
+        Download as Excel (one sheet per table)
       </button>
     </div>
   )

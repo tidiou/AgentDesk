@@ -2,32 +2,40 @@ import json
 import pandas as pd
 
 
-def flatten_json_to_dataframe(data) -> pd.DataFrame:
+
+
+def detect_flattenable_tables(data) -> dict[str, pd.DataFrame]:
     """
-    Flattens arbitrary JSON (a dict or a list of dicts) into a tabular
-    DataFrame. Nested objects become dot-joined columns (e.g. address.city).
-    Nested arrays are preserved as compact JSON strings within a cell,
-    rather than being exploded into additional rows.
+    Scans JSON for array-of-objects fields and flattens each into its own
+    table. Handles two top-level shapes:
+    - A JSON object with one or more array-of-objects fields (each becomes
+      a named table, e.g. {"employees": [...], "projects": [...]})
+    - A bare top-level array of objects (becomes a single table named "data")
     """
-    # Normalize to a list of records, since json_normalize expects that shape
-    if isinstance(data, dict):
-        records = [data]
-    elif isinstance(data, list):
-        records = data
-    else:
+    if isinstance(data, list):
+        if not data or not all(isinstance(item, dict) for item in data):
+            raise ValueError("Top-level array must contain objects to flatten into a table")
+        df = pd.json_normalize(data, sep=".")
+        for col in df.columns:
+            df[col] = df[col].apply(
+                lambda v: json.dumps(v, default=str) if isinstance(v, (list, dict)) else v
+            )
+        return {"data": df}
+
+    if not isinstance(data, dict):
         raise ValueError("JSON must be an object or an array of objects to flatten into a table")
 
-    if not records:
-        raise ValueError("JSON contains no data to flatten")
+    tables = {}
+    for key, value in data.items():
+        if isinstance(value, list) and value and all(isinstance(item, dict) for item in value):
+            df = pd.json_normalize(value, sep=".")
+            for col in df.columns:
+                df[col] = df[col].apply(
+                    lambda v: json.dumps(v, default=str) if isinstance(v, (list, dict)) else v
+                )
+            tables[key] = df
 
-    df = pd.json_normalize(records, sep=".")
+    if not tables:
+        raise ValueError("No array-of-objects fields found to flatten into tables")
 
-    # Any remaining cell that's still a list/dict (nested arrays json_normalize
-    # couldn't flatten further) gets serialized to a compact JSON string,
-    # so every cell ends up as a plain, table-safe value.
-    for col in df.columns:
-        df[col] = df[col].apply(
-            lambda v: json.dumps(v, default=str) if isinstance(v, (list, dict)) else v
-        )
-
-    return df
+    return tables

@@ -1,3 +1,4 @@
+
 from io import BytesIO
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Response
@@ -34,15 +35,17 @@ def generate_flattened_table(job_id: str):
 
     return result
 
-
 @router.post("/export")
 def export_flattened_excel(result: JSONFlattenResponse):
-    df = pd.DataFrame(result.all_rows, columns=result.columns)
-
     buffer = BytesIO()
-    df.to_excel(buffer, index=False, sheet_name="Flattened Data")
-    buffer.seek(0)
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        for table in result.tables:
+            df = pd.DataFrame(table.all_rows, columns=table.columns)
+            # Excel sheet names can't exceed 31 chars or contain some special chars
+            sheet_name = table.table_name[:31]
+            df.to_excel(writer, index=False, sheet_name=sheet_name)
 
+    buffer.seek(0)
     filename = f"Flattened_{result.source_filename.rsplit('.', 1)[0]}.xlsx"
 
     return Response(
