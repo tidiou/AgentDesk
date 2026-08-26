@@ -66,8 +66,10 @@ AgentDesk/
 - **AI calls always go through `ai_client.py`.** Structured outputs are enforced via forced tool-calling (not prompt-based JSON), which is more reliable and mirrors how real agentic tool use works. Anthropic is tried first; if it fails (e.g. rate limit, insufficient credit), the same request silently falls back to OpenAI.
 - **Deterministic computation before AI reasoning, where possible.** Analytics doesn't hand raw rows to the AI — pandas computes real statistics (including outlier detection and trend forecasts) first, and the AI reasons over those. JSON flattening works the same way: pandas fully flattens the structure, AI only curates which columns matter.
 - **Not every function needs AI.** JSON flattening's core transformation is pure pandas — AI is used only for the column-curation step, not the extraction itself.
-
+- **Deterministic Python does the heavy lifting, not the AI.** Every function leans on plain code — pandas for statistics, outlier detection, and trend forecasting; `json_normalize` for flattening nested structures — before any AI call happens. The AI only ever receives a small, already-distilled summary (column stats, a curated table shape, extracted text), never the raw file itself. This keeps token usage low and predictable regardless of input size, and it means arithmetic and structural transformations are always exact — never left to chance in a model's output.
 ## Setup
+![img.png](img.png)
+
 
 ### Prerequisites
 - Python 3.10+
