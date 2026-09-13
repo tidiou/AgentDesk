@@ -2,8 +2,6 @@ import json
 import pandas as pd
 
 
-
-
 def detect_flattenable_tables(data) -> dict[str, pd.DataFrame]:
     """
     Scans JSON for array-of-objects fields and flattens each into its own

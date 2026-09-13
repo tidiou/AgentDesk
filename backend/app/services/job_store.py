@@ -11,7 +11,7 @@ ParsedResult = Union[ParsedDocument, ParsedTable, ParsedStructured]
 class JobRecord:
     job_dir: Path
     filepath: Path
-    category: Literal["document", "table", "structured"]
+    category: Literal["document", "table", "structured", "network"]
     parsed: ParsedResult
 
 

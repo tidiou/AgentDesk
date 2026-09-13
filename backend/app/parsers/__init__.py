@@ -4,6 +4,7 @@ from app.parsers.base import get_file_category, ParsedResult, UnsupportedFileTyp
 from app.parsers.document_parser import parse_document
 from app.parsers.table_parser import parse_table
 from app.parsers.structured_parser import parse_json
+from app.parsers.pcap_parser import parse_pcap
 
 
 def parse_any(filepath: Path) -> ParsedResult:
@@ -18,6 +19,7 @@ def parse_any(filepath: Path) -> ParsedResult:
         "document": parse_document,
         "table": parse_table,
         "structured": parse_json,
+        "network": parse_pcap,
     }
 
     return dispatch[category](filepath)

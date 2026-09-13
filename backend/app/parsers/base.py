@@ -1,7 +1,7 @@
 from pathlib import Path
-from app.schemas.parsed import ParsedDocument, ParsedTable, ParsedStructured
+from app.schemas.parsed import ParsedDocument, ParsedTable, ParsedStructured, ParsedPcap
 
-ParsedResult = ParsedDocument | ParsedTable | ParsedStructured
+ParsedResult = ParsedDocument | ParsedTable | ParsedStructured | ParsedPcap
 
 SUPPORTED_EXTENSIONS = {
     ".pdf": "document",
@@ -12,6 +12,8 @@ SUPPORTED_EXTENSIONS = {
     ".xlsx": "table",
     ".xls": "table",
     ".json": "structured",
+    ".pcap": "network",
+    ".pcapng": "network",
 }
 
 

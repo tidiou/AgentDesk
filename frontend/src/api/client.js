@@ -42,6 +42,15 @@ export async function generateAnalytics(jobId) {
   return response.json()
 }
 
+export async function generatePcapFlows(jobId) {
+  const response = await fetch(`${API_BASE}/functions/pcap/flows/${jobId}`, { method: 'POST' })
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(errorBody.detail || `Flow analysis failed with status ${response.status}`)
+  }
+  return response.json()
+}
+
 export async function exportUATExcel(uatResult) {
   const response = await fetch(`${API_BASE}/functions/uat/export`, {
     method: 'POST',

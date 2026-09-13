@@ -32,3 +32,10 @@ class ParsedStructured(BaseModel):
     data: Any                    # the raw parsed JSON (dict, list, etc.)
     top_level_keys: list[str] = Field(default_factory=list)  # if data is a dict
     item_count: int | None = None  # if data is a list
+
+class ParsedPcap(BaseModel):
+    filename: str
+    file_type: Literal["pcap", "pcapng"]
+    packet_count: int
+    unique_ips: int
+    duration_seconds: float
