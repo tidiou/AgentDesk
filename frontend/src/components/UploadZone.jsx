@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { uploadFile } from '../api/client'
 
-const ACCEPTED_EXTENSIONS = ['.pdf', '.docx', '.pptx', '.txt', '.csv', '.xlsx', '.xls', '.json']
+const ACCEPTED_EXTENSIONS = ['.pdf', '.docx', '.pptx', '.txt', '.csv', '.xlsx', '.xls', '.json', '.pcap', '.pcapng']
 
 function UploadZone({ onUploadComplete }) {
   const [isDragging, setIsDragging] = useState(false)
