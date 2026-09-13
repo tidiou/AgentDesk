@@ -2,15 +2,25 @@ from pathlib import Path
 import pandas as pd
 from scapy.all import rdpcap
 from scapy.layers.inet import IP, TCP, UDP
+
 from app.schemas.parsed import ParsedPcap
+
+APP_PROTOCOL_PORTS = {
+    3868: "DIAMETER",
+    2123: "GTP",
+    2152: "GTP",
+    38412: "NGAP",
+}
+
+
+def _detect_app_protocol(sport, dport):
+    for port in (sport, dport):
+        if port in APP_PROTOCOL_PORTS:
+            return APP_PROTOCOL_PORTS[port]
+    return None
 
 
 def parse_pcap_to_dataframe(filepath: Path) -> pd.DataFrame:
-    """
-    Reads a pcap/pcapng file and extracts one row per packet with the
-    fields needed for conversation/flow analysis. Non-IP packets
-    (ARP, etc.) are skipped, since flows are defined by IP endpoints.
-    """
     packets = rdpcap(str(filepath))
     records = []
 
@@ -18,12 +28,14 @@ def parse_pcap_to_dataframe(filepath: Path) -> pd.DataFrame:
         if IP not in pkt:
             continue
 
-        proto = "OTHER"
+        transport = "OTHER"
         sport = dport = None
         if TCP in pkt:
-            proto, sport, dport = "TCP", pkt[TCP].sport, pkt[TCP].dport
+            transport, sport, dport = "TCP", pkt[TCP].sport, pkt[TCP].dport
         elif UDP in pkt:
-            proto, sport, dport = "UDP", pkt[UDP].sport, pkt[UDP].dport
+            transport, sport, dport = "UDP", pkt[UDP].sport, pkt[UDP].dport
+
+        app_protocol = _detect_app_protocol(sport, dport)
 
         records.append({
             "timestamp": float(pkt.time),
@@ -31,7 +43,8 @@ def parse_pcap_to_dataframe(filepath: Path) -> pd.DataFrame:
             "dst_ip": pkt[IP].dst,
             "src_port": sport,
             "dst_port": dport,
-            "protocol": proto,
+            "protocol": transport,
+            "app_protocol": app_protocol,
             "length": len(pkt),
         })
 
@@ -39,6 +52,7 @@ def parse_pcap_to_dataframe(filepath: Path) -> pd.DataFrame:
         raise ValueError("No IP packets found in this capture")
 
     return pd.DataFrame(records)
+
 
 def parse_pcap(filepath: Path) -> ParsedPcap:
     df = parse_pcap_to_dataframe(filepath)

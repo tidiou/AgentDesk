@@ -5,6 +5,7 @@ class ConversationFlow(BaseModel):
     endpoint_a: str
     endpoint_b: str
     protocol: str
+    app_protocol: str | None
     packet_count: int
     total_bytes: int
     duration_seconds: float
