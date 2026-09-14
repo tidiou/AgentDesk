@@ -29,6 +29,7 @@ pdfminer.six==20260107
 pdfplumber==0.11.10
 pillow==12.3.0
 pycparser==3.0
+pycrate==0.8.1
 pydantic==2.13.4
 pydantic_core==2.46.4
 pypdfium2==5.13.0
