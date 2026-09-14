@@ -1,21 +1,21 @@
 import { useState, useMemo } from 'react'
 
 function PcapFlowResultsView({ result }) {
-  const [protocolFilter, setProtocolFilter] = useState('ALL')
+  const [protocolFilter, setProtocolFilter] = useState('All protocols')
 
   const availableProtocols = useMemo(() => {
-    const found = new Set(result.flows.map((f) => f.app_protocol).filter(Boolean))
-    return ['ALL', ...found]
-  }, [result.flows])
+    const found = new Set(result.packets.map((p) => p.protocol))
+    return ['All protocols', ...Array.from(found).sort()]
+  }, [result.packets])
 
-  const filteredFlows = useMemo(() => {
-    if (protocolFilter === 'ALL') return result.flows
-    return result.flows.filter((f) => f.app_protocol === protocolFilter)
-  }, [result.flows, protocolFilter])
+  const filteredPackets = useMemo(() => {
+    if (protocolFilter === 'All protocols') return result.packets
+    return result.packets.filter((p) => p.protocol === protocolFilter)
+  }, [result.packets, protocolFilter])
 
   return (
     <div style={{ marginTop: '1.5rem' }}>
-      <h3 style={{ color: '#F1F5F9' }}>Network Flows — {result.source_filename}</h3>
+      <h3 style={{ color: '#F1F5F9' }}>Packet Capture — {result.source_filename}</h3>
       <p style={{ color: '#F1F5F9' }}>{result.summary}</p>
 
       <h4 style={{ color: '#F1F5F9' }}>Key Insights</h4>
@@ -33,35 +33,35 @@ function PcapFlowResultsView({ result }) {
           style={selectStyle}
         >
           {availableProtocols.map((p) => (
-            <option key={p} value={p}>{p === 'ALL' ? 'All protocols' : p}</option>
+            <option key={p} value={p}>{p}</option>
           ))}
         </select>
       </div>
 
-      <h4 style={{ color: '#F1F5F9' }}>Conversations ({filteredFlows.length})</h4>
-      <div style={{ overflowX: 'auto' }}>
+      <p style={{ color: '#94A3B8', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+        Showing {filteredPackets.length} of {result.total_packet_count} packets
+        {result.total_packet_count > result.packets.length && ` (capped at ${result.packets.length} for display)`}
+      </p>
+
+      <div style={{ overflowX: 'auto', maxHeight: '500px', overflowY: 'auto' }}>
         <table style={tableStyle}>
           <thead>
             <tr>
-              <th style={thStyle}>Endpoint A</th>
-              <th style={thStyle}>Endpoint B</th>
-              <th style={thStyle}>Transport</th>
+              <th style={thStyle}>Time</th>
+              <th style={thStyle}>Source</th>
+              <th style={thStyle}>Destination</th>
               <th style={thStyle}>Protocol</th>
-              <th style={thStyle}>Packets</th>
-              <th style={thStyle}>Bytes</th>
-              <th style={thStyle}>Duration (s)</th>
+              <th style={thStyle}>Info</th>
             </tr>
           </thead>
           <tbody>
-            {filteredFlows.slice(0, 50).map((flow, i) => (
+            {filteredPackets.map((pkt, i) => (
               <tr key={i}>
-                <td style={tdStyle}>{flow.endpoint_a}</td>
-                <td style={tdStyle}>{flow.endpoint_b}</td>
-                <td style={tdStyle}>{flow.protocol}</td>
-                <td style={tdStyle}>{flow.app_protocol || '—'}</td>
-                <td style={tdStyle}>{flow.packet_count}</td>
-                <td style={tdStyle}>{flow.total_bytes.toLocaleString()}</td>
-                <td style={tdStyle}>{flow.duration_seconds}</td>
+                <td style={tdStyle}>{pkt.time.toFixed(6)}</td>
+                <td style={tdStyle}>{pkt.source}</td>
+                <td style={tdStyle}>{pkt.destination}</td>
+                <td style={tdStyle}>{pkt.protocol}</td>
+                <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '0.75rem' }}>{pkt.info}</td>
               </tr>
             ))}
           </tbody>
@@ -80,7 +80,7 @@ const selectStyle = {
   fontSize: '0.85rem',
 }
 const tableStyle = { borderCollapse: 'collapse', width: '100%', fontSize: '0.8rem' }
-const thStyle = { textAlign: 'left', padding: '0.4rem', borderBottom: '1px solid #334155', color: '#94A3B8' }
+const thStyle = { textAlign: 'left', padding: '0.4rem', borderBottom: '1px solid #334155', color: '#94A3B8', position: 'sticky', top: 0, backgroundColor: '#0F172A' }
 const tdStyle = { padding: '0.4rem', borderBottom: '1px solid #334155', color: '#F1F5F9' }
 
 export default PcapFlowResultsView

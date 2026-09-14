@@ -1,19 +1,18 @@
 import json
 from app.functions.pcap_flows import compute_flows
-from app.schemas.pcap import PcapFlowResponse, ConversationFlow
+from app.parsers.pcap_parser import extract_packet_records
+from app.schemas.pcap import PcapAnalysisResponse, PacketRecord
 from app.services.ai_client import call_ai_tool
 
-SYSTEM_PROMPT = """You are a network analyst reviewing reconstructed \
-conversations (flows) from a packet capture. You will be given a summary \
-of the top conversations by data volume — endpoints, protocol, packet \
-count, total bytes, and duration.
+SYSTEM_PROMPT = """You are a network analyst reviewing a packet capture. \
+You will be given a summary of the top conversations by data volume — \
+endpoints, protocol, packet count, total bytes, and duration.
 
 Your job is to:
 1. Write a brief plain-language summary of what this capture shows overall
 2. Identify specific, genuinely interesting observations — a conversation \
 that's unusually large, long-lived, short but bursty, or otherwise notable; \
-any pattern suggesting a particular kind of traffic (e.g. a bulk transfer, \
-many short-lived connections from one host, a long-lived idle connection)"""
+any pattern suggesting a particular kind of traffic"""
 
 FLOW_INSIGHTS_SCHEMA = {
     "type": "object",
@@ -25,11 +24,11 @@ FLOW_INSIGHTS_SCHEMA = {
 }
 
 TOP_FLOWS_FOR_AI = 15
+MAX_PACKETS_DISPLAYED = 500
 
 
-def generate_pcap_flows(job_id: str, source_filename: str, packet_df) -> PcapFlowResponse:
+def generate_pcap_flows(job_id: str, source_filename: str, packet_df) -> PcapAnalysisResponse:
     flows_df = compute_flows(packet_df)
-
     top_flows = flows_df.head(TOP_FLOWS_FOR_AI).to_dict(orient="records")
     user_message = f"Top conversations by data volume:\n\n{json.dumps(top_flows, indent=2)}"
 
@@ -42,12 +41,11 @@ def generate_pcap_flows(job_id: str, source_filename: str, packet_df) -> PcapFlo
         max_tokens=2048,
     )
 
-    all_flows = [ConversationFlow(**f) for f in flows_df.to_dict(orient="records")]
+    return result  # summary + key_insights only, packets attached by the router
 
-    return PcapFlowResponse(
-        job_id=job_id,
-        source_filename=source_filename,
-        summary=result["summary"],
-        key_insights=result["key_insights"],
-        flows=all_flows,
-    )
+
+def build_packet_records(filepath) -> tuple[list[PacketRecord], int]:
+    raw_records = extract_packet_records(filepath)
+    total_count = len(raw_records)
+    displayed = [PacketRecord(**r) for r in raw_records[:MAX_PACKETS_DISPLAYED]]
+    return displayed, total_count

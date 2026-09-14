@@ -1,20 +1,19 @@
 from pydantic import BaseModel
 
 
-class ConversationFlow(BaseModel):
-    endpoint_a: str
-    endpoint_b: str
+class PacketRecord(BaseModel):
+    time: float
+    source: str
+    destination: str
     protocol: str
-    app_protocol: str | None
-    packet_count: int
-    total_bytes: int
-    duration_seconds: float
-    start_time: float
+    length: int
+    info: str
 
 
-class PcapFlowResponse(BaseModel):
+class PcapAnalysisResponse(BaseModel):
     job_id: str
     source_filename: str
     summary: str
     key_insights: list[str]
-    flows: list[ConversationFlow]
+    packets: list[PacketRecord]
+    total_packet_count: int
