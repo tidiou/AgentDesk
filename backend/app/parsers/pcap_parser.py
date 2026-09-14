@@ -1,4 +1,5 @@
 from pathlib import Path
+import struct
 import pandas as pd
 from scapy.all import rdpcap
 from scapy.layers.inet import IP, TCP, UDP, ICMP
@@ -6,6 +7,8 @@ from scapy.layers.l2 import ARP
 from scapy.layers.dns import DNS
 
 from app.schemas.parsed import ParsedPcap
+
+SCTP_PROTOCOL_NUMBER = 132  # IP protocol number identifying SCTP
 
 APP_PROTOCOL_PORTS = {
     3868: "DIAMETER",
@@ -22,6 +25,19 @@ def _detect_app_protocol(sport, dport):
     return None
 
 
+def _extract_sctp_ports(pkt):
+    """
+    Manually parses source/destination ports from an SCTP packet's common
+    header (first 4 bytes), since scapy's SCTP contrib module isn't
+    available in this environment.
+    """
+    payload = bytes(pkt[IP].payload)
+    if len(payload) < 4:
+        return None, None
+    sport, dport = struct.unpack("!HH", payload[:4])
+    return sport, dport
+
+
 def _resolve_protocol(pkt, transport, sport, dport):
     if ARP in pkt:
         return "ARP"
@@ -34,7 +50,7 @@ def _resolve_protocol(pkt, transport, sport, dport):
     if app_protocol:
         return app_protocol
 
-    if transport in ("TCP", "UDP"):
+    if transport in ("TCP", "UDP", "SCTP"):
         return transport
     if IP in pkt:
         return "IP"
@@ -55,6 +71,9 @@ def parse_pcap_to_dataframe(filepath: Path) -> pd.DataFrame:
             transport, sport, dport = "TCP", pkt[TCP].sport, pkt[TCP].dport
         elif UDP in pkt:
             transport, sport, dport = "UDP", pkt[UDP].sport, pkt[UDP].dport
+        elif pkt[IP].proto == SCTP_PROTOCOL_NUMBER:
+            transport = "SCTP"
+            sport, dport = _extract_sctp_ports(pkt)
 
         app_protocol = _detect_app_protocol(sport, dport)
 
@@ -94,6 +113,9 @@ def extract_packet_records(filepath: Path) -> list[dict]:
                 transport, sport, dport = "TCP", pkt[TCP].sport, pkt[TCP].dport
             elif UDP in pkt:
                 transport, sport, dport = "UDP", pkt[UDP].sport, pkt[UDP].dport
+            elif pkt[IP].proto == SCTP_PROTOCOL_NUMBER:
+                transport = "SCTP"
+                sport, dport = _extract_sctp_ports(pkt)
         elif ARP in pkt:
             src, dst = pkt[ARP].psrc, pkt[ARP].pdst
 
