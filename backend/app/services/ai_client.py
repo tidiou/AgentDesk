@@ -132,3 +132,35 @@ def call_ai_tool(
             raise RuntimeError(f"Both providers failed for tool call. Last error: {e}")
 
     raise RuntimeError("No AI provider is configured.")
+
+def run_mcp_turn(
+    messages: list[dict],
+    system_prompt: str,
+    mcp_server_url: str,
+    auth_credential: str,
+    max_tokens: int = 4096,
+):
+    """
+    Runs one turn of a conversation with an MCP server attached, so the
+    model can call that server's tools as part of answering. Returns the
+    raw response object (not just text) — the caller inspects its content
+    blocks to see what happened and decide whether another turn is needed.
+
+    NOTE: MCP server support in the Anthropic API may require a beta
+    header depending on SDK/API version — flagged here since it's the
+    part most likely to need adjustment once actually run.
+    """
+    response = _anthropic_client.beta.messages.create(
+        model=CLAUDE_MODEL,
+        max_tokens=max_tokens,
+        system=system_prompt,
+        messages=messages,
+        mcp_servers=[{
+            "type": "url",
+            "url": mcp_server_url,
+            "name": "user-mcp-server",
+            "authorization_token": auth_credential,
+        }],
+        betas=["mcp-client-2025-04-04"],
+    )
+    return response

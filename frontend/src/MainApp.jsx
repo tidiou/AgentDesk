@@ -7,6 +7,7 @@ import SummaryResultsView from './components/SummaryResultsView'
 import JSONFlattenResultsView from './components/JSONFlattenResultsView'
 import PcapFlowResultsView from './components/PcapFlowResultsView'
 import ShareButton from './components/ShareButton'
+import MCPAgentPanel from './components/MCPAgentPanel'
 import {
   generateUAT, generateAnalytics, exportUATExcel, generateSummary,
   generateJSONFlatten, generatePcapFlows,

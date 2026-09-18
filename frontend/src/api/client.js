@@ -51,6 +51,23 @@ export async function generatePcapFlows(jobId) {
   return response.json()
 }
 
+export async function runMCPAgent(mcpServerUrl, authCredential, taskDescription) {
+  const response = await fetch(`${API_BASE}/agent/run`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mcp_server_url: mcpServerUrl,
+      auth_credential: authCredential,
+      task_description: taskDescription,
+    }),
+  })
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(errorBody.detail || `Agent run failed with status ${response.status}`)
+  }
+  return response.json()
+}
+
 export async function exportUATExcel(uatResult) {
   const response = await fetch(`${API_BASE}/functions/uat/export`, {
     method: 'POST',
