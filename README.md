@@ -124,3 +124,59 @@ This is an evolving personal tool, with a few deliberate simplifications:
 - Analytics export (Excel/PDF report)
 - Real persistence (database + object storage) and user accounts
 - Agentic file-fetching (local folder access, cloud drive connectors)
+
+## MCP Agent
+Beyond the file-based functions above, AgentDesk includes a generic **MCP agent**: connect any Model Context Protocol server, describe a task in plain language, and the agent autonomously calls that server's tools — searching, fetching, and reasoning across multiple steps — until it produces a synthesized, human-readable answer.
+
+### How it works
+
+User submits (URL, credential, task)
+│
+▼
+Call Anthropic, with the MCP server attached
+│
+▼
+MCP server may be called → tool_use + tool_result blocks
+│
+▼
+stop_reason == "tool_use" ?
+│ │
+yes no
+│ │
+▼ ▼
+Append history, Return final answer
+call again + step log
+│
+└──── loops back to "Call Anthropic" ────┘
+
+1
+1. You provide an MCP server URL, an access credential (API key or OAuth token), and a task description
+2. AgentDesk calls Anthropic with that MCP server attached (via the native `mcp_servers` API parameter)
+3. Anthropic connects to the server and may call its tools, returning tool-use and tool-result content blocks in the same response
+4. AgentDesk checks the response's `stop_reason`: if it's `tool_use`, the full conversation history (including what was just called and returned) is carried forward into another call; otherwise, the response is treated as final
+5. The final answer is returned along with a step-by-step log of every tool call made along the way, so the user can see exactly what the agent did — not just what it concluded
+
+The loop has a hard cap (currently 8 iterations) as a safety net against a task that never resolves cleanly.
+This is deliberately **read/fetch-oriented and session-only** — no credential is stored, and each run is independent. There's currently no OpenAI fallback for this specific feature, since OpenAI has no equivalent native MCP integration.
+
+### Connecting a new MCP server
+
+1. Find the server's MCP endpoint URL (see table below for common ones, or check the provider's own developer docs)
+2. Determine whether it uses a simple API key/token, or full OAuth 2.0
+3. **API key servers:** generate a key in the provider's settings and paste it directly into AgentDesk's credential field
+4. **OAuth servers:** register an app in the provider's developer console to get client credentials, configure consent scopes (grant only what the task needs), then use a tool like [Google's OAuth Playground](https://developers.google.com/oauthplayground) to complete the consent flow and exchange the authorization code for an access token
+5. Test with a small, low-risk, read-only task first before anything more complex
+6. Remember OAuth tokens are typically short-lived (often ~1 hour) — expect to refresh periodically for repeated use
+
+### Commonly used MCP servers
+
+| Service | MCP Endpoint | Auth | Setup |
+|---|---|---|---|
+| **Gmail** | `https://gmailmcp.googleapis.com/mcp/v1` | OAuth 2.0 | [Google's Gmail MCP guide](https://developers.google.com/workspace/gmail/api/guides/configure-mcp-server) |
+| **Google Workspace** (Drive, Docs, Sheets, Calendar, etc.) | varies by product | OAuth 2.0 | [Google Workspace MCP guide](https://developers.google.com/workspace/guides/configure-mcp-servers) |
+| **GitHub** | `https://api.githubcopilot.com/mcp/` | Personal Access Token (simplest) or OAuth | [GitHub MCP server docs](https://github.com/github/github-mcp-server) |
+| **Slack** | `https://mcp.slack.com/mcp` | OAuth 2.0 (via a Slack app you create) | [Slack MCP client docs](https://docs.slack.dev/ai/slackbot-mcp-client/) |
+| **Notion** | `https://mcp.notion.com/mcp` | OAuth 2.0 | [Notion's MCP documentation](https://developers.notion.com) |
+| **Filesystem, Git, PostgreSQL, SQLite, and other local/reference servers** | self-hosted, run locally | varies | [Official MCP servers repo](https://github.com/modelcontextprotocol/servers) |
+
+Note: some of these (GitHub, PostgreSQL, and others) also have local/self-hosted variants that run via Docker or npx instead of a remote URL — worth checking the linked docs for which mode fits a given use case.
