@@ -173,6 +173,7 @@ function MainApp() {
           <ShareButton result={analyticsResult} />
         </>
       )}
+  <MCPAgentPanel />
     </div>
   )
 }
