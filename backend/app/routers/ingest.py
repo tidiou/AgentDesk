@@ -1,5 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-
+from pydantic import BaseModel
+from app.parsers.url_parser import parse_url
+from app.parsers.base import ParsedResult
 from app.parsers import parse_any
 from app.parsers.base import get_file_category, UnsupportedFileTypeError
 from app.schemas.requests import IngestResponse
@@ -14,6 +16,30 @@ from app.services.file_storage import (
 
 router = APIRouter()
 
+class URLIngestRequest(BaseModel):
+    url: str
+
+@router.post("/from-url", response_model=IngestResponse)
+def ingest_from_url(request: URLIngestRequest):
+    job_id, job_dir = create_job_dir()
+
+    try:
+        category, parsed = parse_url(request.url)
+    except ValueError as e:
+        cleanup_job(job_dir)
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        cleanup_job(job_dir)
+        raise HTTPException(status_code=500, detail=f"Failed to fetch URL: {e}")
+
+    save_job(job_id, JobRecord(
+        job_dir=job_dir,
+        filepath=job_dir / "url_source.txt",
+        category=category,
+        parsed=parsed,
+    ))
+
+    return IngestResponse(job_id=job_id, category=category, parsed=parsed)
 
 @router.post("/upload", response_model=IngestResponse)
 async def upload_file(file: UploadFile = File(...)):

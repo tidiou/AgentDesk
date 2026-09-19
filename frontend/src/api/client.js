@@ -68,6 +68,19 @@ export async function runMCPAgent(mcpServerUrl, authCredential, taskDescription)
   return response.json()
 }
 
+export async function ingestFromUrl(url) {
+  const response = await fetch(`${API_BASE}/ingest/from-url`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  })
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(errorBody.detail || `Failed to fetch URL (status ${response.status})`)
+  }
+  return response.json()
+}
+
 export async function exportUATExcel(uatResult) {
   const response = await fetch(`${API_BASE}/functions/uat/export`, {
     method: 'POST',

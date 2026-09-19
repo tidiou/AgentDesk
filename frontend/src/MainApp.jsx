@@ -8,6 +8,7 @@ import JSONFlattenResultsView from './components/JSONFlattenResultsView'
 import PcapFlowResultsView from './components/PcapFlowResultsView'
 import ShareButton from './components/ShareButton'
 import MCPAgentPanel from './components/MCPAgentPanel'
+import UrlIngestPanel from './components/UrlIngestPanel'
 import {
   generateUAT, generateAnalytics, exportUATExcel, generateSummary,
   generateJSONFlatten, generatePcapFlows,
@@ -110,7 +111,9 @@ function MainApp() {
       <h1 style={{ color: '#3B82F6', marginBottom: '0.2rem' }}>AgentDesk</h1>
       <p style={{ color: '#94A3B8' }}>Agentic document/data transformation toolkit</p>
 
+
       <UploadZone onUploadComplete={handleNewUpload} />
+      <UrlIngestPanel onUploadComplete={handleNewUpload} />
 
       {uploadResult && <FilePreviewCard uploadResult={uploadResult} />}
 
