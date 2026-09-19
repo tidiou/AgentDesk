@@ -8,11 +8,17 @@ task — exploring, searching, or fetching multiple times if the task requires \
 it.
 
 Once you have everything needed to answer, respond with a clear, human-readable \
-final answer written in plain prose — never raw JSON, tool output, or data \
-structures. Summarize and format the information the way a helpful assistant \
-would explain it to a person: use short paragraphs or a simple bulleted list \
-where appropriate, and translate technical fields (like message IDs or raw \
-timestamps) into natural language rather than showing them verbatim."""
+final answer written in plain prose. This is a strict requirement: never \
+include raw JSON, field names like "snippet" or "threadId", or any verbatim \
+copy of tool output in your final answer. Instead, read the data yourself and \
+re-express it in your own words, the way you would explain it to a colleague \
+over chat — short paragraphs or a simple bulleted list, translating any \
+technical fields into natural language.
+
+For example, if a tool returns raw data about an email, your final answer \
+should say something like "An email from Immobilien Scout24 about new \
+apartment listings in Bonn — looks like routine marketing, can wait" — never \
+paste the raw snippet or JSON structure itself."""
 
 MAX_ITERATIONS = 8
 
@@ -40,16 +46,15 @@ def run_mcp_agent(mcp_server_url: str, auth_credential: str, task_description: s
             system_prompt=SYSTEM_PROMPT,
             mcp_server_url=mcp_server_url,
             auth_credential=auth_credential,
+            max_tokens=8192,
         )
 
         text_parts = []
-        made_tool_call = False
 
         for block in response.content:
             if block.type == "text":
                 text_parts.append(block.text)
             elif block.type == "mcp_tool_use":
-                made_tool_call = True
                 steps.append(AgentStep(
                     step_number=iteration,
                     action=f"Called tool: {block.name}",
@@ -62,19 +67,16 @@ def run_mcp_agent(mcp_server_url: str, auth_credential: str, task_description: s
                     detail=_extract_tool_result_text(block)[:300],
                 ))
 
-        # Carry the model's full response forward, so the next turn (if any)
-        # has complete context of what was called and what came back.
         messages.append({"role": "assistant", "content": response.content})
 
-        if not made_tool_call:
-            # No new tool call this turn — the model is done, this is its final answer.
+        if response.stop_reason != "tool_use":
+            # The model has genuinely finished — this response's text is the real answer.
             return MCPAgentResponse(
-                final_answer="\n".join(text_parts),
+                final_answer="\n".join(text_parts).strip(),
                 steps=steps,
                 iterations_used=iteration,
             )
 
-    # Safety net: hit the iteration cap without a clean final answer.
     return MCPAgentResponse(
         final_answer="The agent reached its step limit without a conclusive answer. Partial progress is shown below.",
         steps=steps,
