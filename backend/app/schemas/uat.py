@@ -15,3 +15,4 @@ class UATGenerationResponse(BaseModel):
     job_id: str
     source_filename: str
     test_cases: list[UATTestCase]
+    parts_processed: int = 1  # >1 when a long document was chunked

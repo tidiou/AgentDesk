@@ -27,6 +27,7 @@ def generate_uat(job_id: str):
             job_id=job_id,
             source_filename=job.parsed.filename,
             document_text=job.parsed.text,
+            headings=job.parsed.sections,
         )
     except OutputTruncatedError as e:
         raise HTTPException(status_code=422, detail=str(e))
