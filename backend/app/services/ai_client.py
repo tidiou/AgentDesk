@@ -6,6 +6,22 @@ from openai import APIError as OpenAIAPIError
 
 from app.config import ANTHROPIC_API_KEY, OPENAI_API_KEY, CLAUDE_MODEL, OPENAI_MODEL
 
+class OutputTruncatedError(RuntimeError):
+    """
+    Raised when the model hit max_tokens before finishing its answer.
+    For tool calls this means the structured output is incomplete, so
+    using it would crash later with a confusing KeyError/validation error.
+    Deliberately NOT an API error, so it doesn't trigger the OpenAI
+    fallback: the other provider would hit the same limit on the same input.
+    """
+
+
+TRUNCATION_MESSAGE = (
+    "The AI's response was cut off because the output was too long. "
+    "The document probably contains too much to process in one pass. "
+    "Try a smaller document, or split it into sections."
+)
+
 _anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 _openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
@@ -68,6 +84,8 @@ def _call_tool_anthropic(
         tool_choice={"type": "tool", "name": tool_name},
         messages=[{"role": "user", "content": user_message}],
     )
+    if response.stop_reason == "max_tokens":
+        raise OutputTruncatedError(TRUNCATION_MESSAGE)
     for block in response.content:
         if block.type == "tool_use":
             return block.input  # already a parsed dict
@@ -95,6 +113,8 @@ def _call_tool_openai(
         }],
         tool_choice={"type": "function", "function": {"name": tool_name}},
     )
+    if response.choices[0].finish_reason == "length":
+        raise OutputTruncatedError(TRUNCATION_MESSAGE)
     tool_calls = response.choices[0].message.tool_calls
     if not tool_calls:
         raise RuntimeError("OpenAI response did not contain a tool call")

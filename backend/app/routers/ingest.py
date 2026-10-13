@@ -5,6 +5,7 @@ from app.parsers.base import ParsedResult
 from app.parsers import parse_any
 from app.parsers.base import get_file_category, UnsupportedFileTypeError
 from app.schemas.requests import IngestResponse
+from app.config import MAX_DOCUMENT_CHARS
 from app.services.job_store import save_job, delete_job, JobRecord
 from app.services.file_storage import (
     create_job_dir,
@@ -15,6 +16,27 @@ from app.services.file_storage import (
 )
 
 router = APIRouter()
+
+
+def _enforce_document_size(category: str, parsed, job_dir) -> None:
+    """
+    Rejects documents whose extracted text is too large to send to the AI
+    in one call. Checked on text length, not file size: a 2MB .docx full of
+    images may hold little text, while a 500KB .txt can hold a lot.
+    """
+    if category != "document":
+        return
+    length = len(parsed.text)
+    if length > MAX_DOCUMENT_CHARS:
+        cleanup_job(job_dir)
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                f"'{parsed.filename}' contains {length:,} characters of text, "
+                f"above the {MAX_DOCUMENT_CHARS:,} limit. "
+                "Try a smaller document, or split it into sections."
+            ),
+        )
 
 class URLIngestRequest(BaseModel):
     url: str
@@ -31,6 +53,8 @@ def ingest_from_url(request: URLIngestRequest):
     except Exception as e:
         cleanup_job(job_dir)
         raise HTTPException(status_code=500, detail=f"Failed to fetch URL: {e}")
+
+    _enforce_document_size(category, parsed, job_dir)
 
     save_job(job_id, JobRecord(
         job_dir=job_dir,
@@ -68,6 +92,8 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         cleanup_job(job_dir)
         raise HTTPException(status_code=500, detail=f"Failed to parse file: {e}")
+
+    _enforce_document_size(category, parsed, job_dir)
 
     save_job(job_id, JobRecord(
         job_dir=job_dir,

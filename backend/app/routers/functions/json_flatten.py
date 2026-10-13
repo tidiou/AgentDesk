@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Response
 from app.functions.json_flatten_generator import generate_json_flatten
 from app.schemas.json_flatten import JSONFlattenResponse
 from app.services.job_store import get_job
+from app.services.ai_client import OutputTruncatedError
 
 router = APIRouter()
 
@@ -29,6 +30,8 @@ def generate_flattened_table(job_id: str):
             data=job.parsed.data,
         )
     except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except OutputTruncatedError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Flattening failed: {e}")

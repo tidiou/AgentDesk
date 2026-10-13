@@ -4,6 +4,7 @@ from app.functions.pcap_flow_generator import generate_pcap_flows, build_packet_
 from app.parsers.pcap_parser import parse_pcap_to_dataframe
 from app.schemas.pcap import PcapAnalysisResponse
 from app.services.job_store import get_job
+from app.services.ai_client import OutputTruncatedError
 
 router = APIRouter()
 
@@ -21,6 +22,8 @@ def generate_flows(job_id: str):
         packet_df = parse_pcap_to_dataframe(job.filepath)
         ai_result = generate_pcap_flows(job_id, job.parsed.filename, packet_df)
         packets, total_count = build_packet_records(job.filepath)
+    except OutputTruncatedError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Flow analysis failed: {e}")
 

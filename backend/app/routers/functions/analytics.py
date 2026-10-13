@@ -4,6 +4,7 @@ from app.services.share_store import create_share, get_shared_analytics
 from app.functions.analytics_generator import generate_analytics
 from app.schemas.analytics import AnalyticsResponse
 from app.services.job_store import get_job
+from app.services.ai_client import OutputTruncatedError
 
 router = APIRouter()
 
@@ -37,6 +38,8 @@ def generate_table_analytics(job_id: str):
             source_filename=job.parsed.filename,
             df=df,
         )
+    except OutputTruncatedError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analytics generation failed: {e}")
 

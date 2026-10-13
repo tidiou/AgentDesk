@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from app.functions.summary_generator import generate_summary
 from app.schemas.summary import DocumentSummaryResponse
 from app.services.job_store import get_job
+from app.services.ai_client import OutputTruncatedError
 
 router = APIRouter()
 
@@ -25,6 +26,8 @@ def generate_document_summary(job_id: str):
             source_filename=job.parsed.filename,
             document_text=job.parsed.text,
         )
+    except OutputTruncatedError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Summarization failed: {e}")
 
